@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # 4. Instala as dependências dentro do container
-RUN npm install
+RUN npm install --include=dev
 
 # 5. Copia o restante do código da nossa aplicação para o container
 COPY . .
