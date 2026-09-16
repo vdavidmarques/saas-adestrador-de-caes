@@ -7,6 +7,8 @@ import cors from 'cors';
 import tutoresRoutes from './routes/tutores.routes';
 import caesRoutes from './routes/caes.routes';
 import treinosRoutes from './routes/treinos.routes';
+import adestradoresRoutes from './routes/adestradores.routes';
+import { verificarToken } from './middlewares/auth.middleware';
 
 // 2. Criando a aplicação Express
 const app = express();
@@ -15,9 +17,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// 🔓 ROTAS PÚBLICAS (Não exigem token)
+app.use('/adestradores', adestradoresRoutes);
+
+// 🔒 BARREIRA DE SEGURANÇA
+// Qualquer rota registrada abaixo desta linha exigirá o token JWT válido!
+app.use(verificarToken);
+
+// 🔐 ROTAS PROTEGIDAS
 app.use('/tutores', tutoresRoutes);
 app.use('/caes', caesRoutes);
-
 //Registra a rota de treinos
 app.use('/treinos', treinosRoutes);
 
