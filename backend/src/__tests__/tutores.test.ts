@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { describe, expect, it } from '@jest/globals';
 import app from '../app';
 
 describe('Testes de Integração - Módulo de Tutores', () => {
@@ -13,5 +14,13 @@ describe('Testes de Integração - Módulo de Tutores', () => {
     expect(resposta.status).toBe(400);
     expect(resposta.body).toHaveProperty('erros');
   });
+  
+  it('deve bloquear o acesso e retornar 401 ao tentar listar tutores sem enviar o Token JWT', async () => {
+    // Simulamos uma requisição GET sem configurar o header 'Authorization'
+    const resposta = await request(app).get('/tutores');
 
+    // A expectativa é que o nosso auth.middleware intercepte e barre a requisição
+    expect(resposta.status).toBe(401);
+    expect(resposta.body.mensagem).toBe('Token JWT não fornecido.');
+  });
 });
