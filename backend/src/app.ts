@@ -5,6 +5,7 @@ import caesRoutes from './routes/caes.routes';
 import treinosRoutes from './routes/treinos.routes';
 import adestradoresRoutes from './routes/adestradores.routes';
 import { errorHandler } from './middlewares/errorHandler';
+import { verificarToken } from './middlewares/auth.middleware'; 
 
 // Inicializa a aplicação Express
 const app = express();
@@ -15,6 +16,9 @@ app.use(cors());
 
 // Registro de Rotas Públicas
 app.use('/adestradores', adestradoresRoutes);
+
+// BARREIRA DE SEGURANÇA (Adicione esta linha!)
+app.use(verificarToken);
 
 // Registro de Rotas do Domínio (Protegidas ou abertas conforme configurado)
 app.use('/tutores', tutoresRoutes);
