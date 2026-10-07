@@ -39,17 +39,45 @@ router.post('/setup-tabela', async (req: Request, res: Response) => {
   }
 });
 
-// GET /tutores - Busca todos os tutores
+// GET /tutores - Busca todos os tutores do adestrador logado com Paginação
 router.get('/', async (req: Request, res: Response) => {
   const adestradorId = (req as any).adestradorId;
-  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM tutores WHERE adestrador_id = ?', [adestradorId]);
   
-  if(rows.length === 0) {
-    // Basta "lançar" o erro. O errorHandles vai capturar e formatar como JSON 404.
-    throw new AppError('Nenhum tutor encontrado.', 404);
-  }
+  //1. Capturamos os alores da URL (query strings) ou definimos valores padrão. Ex: ?pagina=1&limite=10
+  const pagina = parseInt(req.query.pagina as string) || 1;
+  const limite = parseInt(req.query.limite as string) || 10;
 
-  return res.status(200).json(rows[0]);
+  //2. Calculamos quantos registros o banco deve "pular" (Offset)
+  const offset = (pagina -1) * limite;
+
+
+  //3. Buscamos o total de tutores que esse adestrador possui para o Front-end saber quantas páginas existem
+  const sqlTotal = 'SELECT COUNT(*) as total FROM tutores WHERE adestrador_id = ?';
+  const [linhasTotal]: any = await db.query(sqlTotal, [adestradorId]);
+  const totalRegistros = linhasTotal[0].total;
+  const totalPaginas = Math.ceil(totalRegistros / limite);
+
+  //4. Buscamos os dados reais com LIMIT e OFFSET
+  //Dica de segurança: LIMIT e OFFSET no mysql2 precisam de tratamento numérico explícito, então usamos a conversão direta na string ou passamos os números puros.
+  const sqlDados = `
+    SELECT * FROM tutores 
+    WHERE adestrador_id = ? 
+    ORDER BY criado_em DESC 
+    LIMIT ? OFFSET ?
+  `;
+
+  const [tutores]:any = await db.query(sqlDados, [adestradorId, limite, offset]);
+
+  //5. Retornamos um objeto estruturado (Padrão profissional de paginação)
+  return res.status(200).json({
+    dados: tutores,
+    metadados: {
+      total_registros: totalRegistros,
+      total_paginas: totalPaginas,
+      pagina_atual: pagina,
+      limite_por_pagina: limite
+    }
+  })
 });
 
 // GET /tutores/:id - Busca tutor por ID
